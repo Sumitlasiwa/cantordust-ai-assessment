@@ -1,6 +1,6 @@
 import os
 import pdfplumber
-
+from typing import List
 def extract_text_from_pdf(input_path):
     """
     Extracts text from a PDF file using pdfplumber.
@@ -24,22 +24,24 @@ def save_text_to_file(text, output_path):
     with open(output_path, "w", encoding='utf-8') as f:
         f.write(text)
 
-def extract_text_from_pdfs_through_directory(input_dir, output_dir):
+def extract_text(pdf_paths: List[str], output_dir: str) -> List[str]:
     """
     Loops through all PDF files in the input directory, extracts text, and saves it to the output directory.
 
     Args:
-        input_dir (str): The directory containing PDF files.
+        pdf_paths List(str): paths of pdf files.
         output_dir (str): The directory where extracted text files will be saved.
     """
-    for i, pdf in enumerate(sorted(os.listdir(input_dir))):
-        if pdf.endswith(".pdf"):
-            input_path = os.path.join(input_dir, pdf)
-            output_path = os.path.join(output_dir, f"parsed_text_{i+1}.txt")
-            text = extract_text_from_pdf(input_path)
-            save_text_to_file(text, output_path)
-            print(f"Extracted text from {input_path} to {output_path}")
+    text_paths = []
+    for i, pdf_path in enumerate(pdf_paths, start=1):
+        output_path = os.path.join(output_dir, f"parsed_text_{i}.txt")
+        text = extract_text_from_pdf(pdf_path)
+        save_text_to_file(text, output_path)
+        print(f"Extracted text from {pdf_path} to {output_path}")
+        text_paths.append(output_path)
+
+    return text_paths
 
 if __name__ == "__main__":
-    extract_text_from_pdfs_through_directory("data/raw", "data/processed")
+    extract_text(["data/raw/datasheet_1.pdf", "data/raw/datasheet_2.pdf"], "data/processed")
 

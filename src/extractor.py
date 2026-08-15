@@ -52,7 +52,7 @@ def extract_product_info(input_file: str) -> dict:
     """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite",
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
@@ -89,25 +89,27 @@ def extract_and_save_product_info(input_file: str, output_file: str):
     save_product_info_to_json(product_info, output_file)
     print(f"Extracted product information from {input_file} saved to {output_file}")
 
-def extract_and_save_product_info_through_directory(input_dir: str, output_dir: str):
+def extract_fields(text_paths: List[str], output_dir: str) -> List[str]:
     """
-    Loops through all text files in the input directory, extracts product information, and saves it to the output directory.
+    Loops through all text paths, extracts product information, and saves it to the output directory.
 
     Args:
-        input_dir (str): The directory containing text files.
+        text_paths (str): The list of text paths.
         output_dir (str): The directory where extracted JSON files will be saved.
     """
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    for i, txt_file in enumerate(sorted(os.listdir(input_dir))):
-        if txt_file.endswith(".txt"):
-            input_path = os.path.join(input_dir, txt_file)
-            output_path = os.path.join(output_dir, f"product_info_{i+1}.json")
-            extract_and_save_product_info(input_path, output_path)
+    extracted_paths = []
+    for i, txt_path in enumerate(text_paths, start=1):
+        output_path = os.path.join(output_dir, f"product_info_{i}.json")
+        extract_and_save_product_info(txt_path, output_path)
+        extracted_paths.append(output_path)
+
+    return extracted_paths
 
 if __name__ == "__main__":
-    extract_and_save_product_info_through_directory("data/processed", "outputs/extracted")
+    extract_fields(["data/processed/parsed_text_1.txt","data/processed/parsed_text_2.txt"], "outputs/extracted")
 
 
 

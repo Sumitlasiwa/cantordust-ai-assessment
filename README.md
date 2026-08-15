@@ -34,6 +34,21 @@ python src/main.py
 
 The final report is written to `outputs/reports/final_report.md`.
 
+## Workflow orchestration
+
+The pipeline is orchestrated with LangGraph. `src/main.py` supplies the two PDF
+URLs and the report path, then invokes the compiled graph in `src/graph.py`.
+
+```text
+fetch PDFs → parse PDF text → extract product fields → compare fields → generate report
+```
+
+LangGraph passes one shared workflow state between these nodes. The state holds
+the input URLs, paths to downloaded PDFs and extracted text, paths to the
+extracted JSON files, the comparison result path, and the final report path.
+This makes the pipeline steps explicit and gives the project a clear place to
+add branching, retries, validation, or additional processing steps later.
+
 ## Project structure
 
 ```text
@@ -47,6 +62,7 @@ The final report is written to `outputs/reports/final_report.md`.
 │   └── reports/             # Final Markdown report
 ├── src/
 │   ├── main.py              # Runs the complete pipeline
+│   ├── graph.py             # LangGraph workflow and pipeline nodes
 │   ├── fetcher.py           # Downloads PDFs from configured URLs
 │   ├── parser.py            # Extracts text from PDFs
 │   ├── extractor.py         # Extracts predefined product fields with Gemini
@@ -67,6 +83,8 @@ The final report is written to `outputs/reports/final_report.md`.
 - `pdfplumber` — extracts text from PDF files.
 - `requests` — downloads manufacturer datasheets.
 - `python-dotenv` — loads `GOOGLE_API_KEY` from `.env`.
+- `langgraph` — orchestrates the fetch, parse, extract, compare, and report
+  steps as a stateful workflow.
 
 ## Assumptions and limitations
 

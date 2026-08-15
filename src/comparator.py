@@ -63,7 +63,7 @@ def llm_compare(field, val1, val2):
     """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.5-flash",
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
@@ -137,21 +137,18 @@ def load_compare_and_save(doc1, doc2, output_file):
     results = compare_documents(doc1, doc2)
     save_comparison_results(results, output_file)
 
-def load_compare_and_save_through_directory(input_dir, output_dir):
+def compare_fields(extracted_paths: List[str], output_dir: str) -> str:
     """
-    Compare all pairs of documents in the input directory and save the results to the output directory.
+    Compare documents in the extracted_paths and save the results to the output directory.
     """
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    
+    output_file = os.path.join(output_dir, f"comparison_results.json")
+    load_compare_and_save(extracted_paths[0], extracted_paths[1], output_file)
+    print(f"Comparison results saved to {output_file}")
 
-    files = [f for f in os.listdir(input_dir) if f.endswith('.json')]
-    for i in range(len(files)):
-        for j in range(i + 1, len(files)):
-            doc1_path = os.path.join(input_dir, files[i])
-            doc2_path = os.path.join(input_dir, files[j])
-            output_file = os.path.join(output_dir, f"comparison_results.json")
-            load_compare_and_save(doc1_path, doc2_path, output_file)
-    print(f"Comparison results saved to {output_dir}")
+    return output_file
 
 if __name__ == "__main__":
-    load_compare_and_save_through_directory("outputs/extracted", "outputs/comparisons")
+    compare_fields(["outputs/extracted/product_info_1.json", "outputs/extracted/product_info_2.json"], "outputs/comparisons")
