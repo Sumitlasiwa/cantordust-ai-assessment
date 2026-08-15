@@ -1,5 +1,6 @@
 from google import genai
 from google.genai import types
+from llm_client import get_genai_client
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import dotenv
@@ -36,7 +37,7 @@ def llm_compare(field, val1, val2):
     Use a language model to compare two values and return the comparison result.
     """
     # Placeholder for LLM comparison logic
-    client = genai.Client()
+    client = get_genai_client()
 
     prompt = f"""
     You are comparing specifications from two manufacturer documents.
@@ -62,7 +63,7 @@ def llm_compare(field, val1, val2):
     """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash-lite",
+        model="gemini-2.5-flash",
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",

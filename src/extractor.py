@@ -1,5 +1,6 @@
 from google import genai
 from google.genai import types
+from llm_client import get_genai_client
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import dotenv
@@ -36,7 +37,7 @@ def extract_product_info(input_file: str) -> dict:
     Args:
         input_file (str): The path to the input text file.
     """
-    client = genai.Client()
+    client = get_genai_client()
 
     with open(input_file, 'r', encoding='utf-8') as f:
         file_content = f.read()
@@ -51,7 +52,7 @@ def extract_product_info(input_file: str) -> dict:
     """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash-lite",
+        model="gemini-2.5-flash",
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
@@ -107,7 +108,6 @@ def extract_and_save_product_info_through_directory(input_dir: str, output_dir: 
 
 if __name__ == "__main__":
     extract_and_save_product_info_through_directory("data/processed", "outputs/extracted")
-
 
 
 
