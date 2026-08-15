@@ -1,5 +1,12 @@
-import os
+from google import genai
+from google.genai import types
+from pydantic import BaseModel, Field
+from typing import List, Optional
+import dotenv
 import json
+import os
+
+dotenv.load_dotenv()
 
 def normalize(value):
     """
@@ -8,9 +15,63 @@ def normalize(value):
     if isinstance(value, str):
         return value.strip().replace(" ", "").upper()
     elif isinstance(value, list):
-        return [normalize(v) for v in value]
+        return sorted(normalize(v) for v in value)
     else:
         return value
+
+from typing import TypedDict, Literal
+from pydantic import Field
+
+class Status(TypedDict):
+    status: Literal[
+        "match",
+        "possible match",
+        "conflict"
+    ]
+    confidence: float
+    reason: str
+
+def llm_compare(field, val1, val2):
+    """
+    Use a language model to compare two values and return the comparison result.
+    """
+    # Placeholder for LLM comparison logic
+    client = genai.Client()
+
+    prompt = f"""
+    You are comparing specifications from two manufacturer documents.
+
+    Field: {field}
+
+    Value 1:
+    {val1}
+
+    Value 2:
+    {val2}
+
+    Classify as:
+
+    - match: same meaning
+    - possible match: likely same but uncertain
+    - conflict: genuinely different
+
+    Be conservative.
+    Do not assume equivalence unless supported.
+
+    Return JSON only.
+    """
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash-lite",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=Status,
+        ),
+    )
+    
+    result = json.loads(response.text)
+    return result 
 
 def compare_documents(doc1, doc2):
     """
@@ -24,20 +85,33 @@ def compare_documents(doc1, doc2):
         val1 = doc1.get(field)
         val2 = doc2.get(field)
 
+        response = None
+
         if normalize(val1) == normalize(val2):
             status = "match"
+        elif isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
+            status = "conflict" if val1 != val2 else "match"
         elif val1 is None:
             status = "only in doc2"
         elif val2 is None:
             status = "only in doc1"
         else:
-            status = "conflict"
+            response = llm_compare(field, val1, val2)
 
-        comparison_results[field] = {
-            "doc1_value": val1,
-            "doc2_value": val2,
-            "status": status
-        }
+        if response:
+            comparison_results[field] = {
+                "doc1_value": val1,
+                "doc2_value": val2,
+                "status": response["status"],
+                "confidence": response["confidence"],
+                "reason": response["reason"],
+            }
+        else:
+            comparison_results[field] = {
+                "doc1_value": val1,
+                "doc2_value": val2,
+                "status": status,
+            }
 
     return comparison_results
 
@@ -76,6 +150,7 @@ def load_compare_and_save_through_directory(input_dir, output_dir):
             doc2_path = os.path.join(input_dir, files[j])
             output_file = os.path.join(output_dir, f"comparison_results.json")
             load_compare_and_save(doc1_path, doc2_path, output_file)
+    print(f"Comparison results saved to {output_dir}")
 
 if __name__ == "__main__":
     load_compare_and_save_through_directory("outputs/extracted", "outputs/comparisons")
