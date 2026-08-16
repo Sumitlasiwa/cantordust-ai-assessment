@@ -49,6 +49,59 @@ extracted JSON files, the comparison result path, and the final report path.
 This makes the pipeline steps explicit and gives the project a clear place to
 add branching, retries, validation, or additional processing steps later.
 
+`src/graph_visualizer.py` renders this compiled LangGraph workflow as
+`workflow_graph.png`. `src/main.py` calls it after the pipeline completes, so
+the repository includes a visual representation of the workflow as well as the
+code that defines it.
+
+## Architecture
+
+```text
+Manufacturer PDF URLs
+        |
+        v
+  requests downloads PDFs
+        |
+        v
+pdfplumber extracts selectable text ──> data/processed/*.txt
+        |
+        v
+Gemini extracts the `ProductInfo` schema ──> outputs/extracted/*.json
+        |
+        v
+Deterministic comparison, with Gemini only for ambiguous values
+        |
+        v
+Markdown comparison report
+```
+
+### Why extract text with `pdfplumber` before using the LLM?
+
+The pipeline deliberately does not send each PDF directly to an LLM and ask it
+to return JSON. `pdfplumber` first extracts the selectable text locally, and
+the LLM then performs the narrower task of mapping that text to the predefined
+`ProductInfo` schema.
+
+This separation has several benefits:
+
+- **Inspectable intermediate data.** The extracted text is saved under
+  `data/processed/`, so an unexpected JSON value can be traced back to the
+  source text used by the model.
+- **More predictable LLM input.** Plain text avoids depending on a model's PDF
+  document-ingestion behavior and lets the prompt focus on field extraction.
+- **Lower coupling and easier testing.** PDF parsing can be tested, replaced,
+  or enhanced independently from the Gemini extraction and comparison stages.
+- **Controlled use of the LLM.** The model receives text rather than a binary
+  document and is also limited to a Pydantic-defined response schema; simple
+  comparisons remain local and deterministic.
+
+The tradeoff is that text-only extraction can lose layout and table structure,
+and it does not support image-only scanned PDFs. A direct multimodal PDF-to-JSON
+approach may preserve visual context for those documents, but makes extraction
+less inspectable and more dependent on the model's document parsing. For this
+assessment's selectable-text manufacturer datasheets and fixed comparison
+schema, the staged approach favors reproducibility and debuggability.
+
 ## Project structure
 
 ```text
@@ -63,6 +116,7 @@ add branching, retries, validation, or additional processing steps later.
 ├── src/
 │   ├── main.py              # Runs the complete pipeline
 │   ├── graph.py             # LangGraph workflow and pipeline nodes
+│   ├── graph_visualizer.py  # Renders the LangGraph workflow to workflow_graph.png
 │   ├── fetcher.py           # Downloads PDFs from configured URLs
 │   ├── parser.py            # Extracts text from PDFs
 │   ├── extractor.py         # Extracts predefined product fields with Gemini
@@ -71,7 +125,8 @@ add branching, retries, validation, or additional processing steps later.
 │   └── llm_client.py        # Shared Gemini client
 ├── .env.example             # Required environment variable template
 ├── requirements.txt         # Python dependencies
-└── pyproject.toml           # Project metadata and dependencies
+├── pyproject.toml           # Project metadata and dependencies
+└── workflow_graph.png       # Generated visualization of the LangGraph workflow
 ```
 
 ## Important libraries

@@ -7,3 +7,4 @@ data/processed/*
 outputs/extracted/*
 outputs/comparisons/*
 outputs/reports/*
+Experiments/*

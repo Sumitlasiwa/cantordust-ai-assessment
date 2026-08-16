@@ -28,7 +28,7 @@ class ProductInfo(BaseModel):
     permissible_altitude_m: Optional[float] = Field(None, description="Permissible altitude in meters")
     grid_connection_standards: Optional[List[str]] = Field(None, description="List of grid connection standards the product complies with")
     safety_standards: Optional[List[str]] = Field(None, description="List of safety standards the product complies with")
-
+    rated_output_power_KW: Optional[List[str]] = Field(None, description="List of rated output powers")
 
 def extract_product_info(input_file: str) -> dict:
     """
@@ -102,7 +102,7 @@ def extract_fields(text_paths: List[str], output_dir: str) -> List[str]:
 
     extracted_paths = []
     for i, txt_path in enumerate(text_paths, start=1):
-        output_path = os.path.join(output_dir, f"product_info_{i}.json")
+        output_path = os.path.join(output_dir, f"product_info_{0}.json")
         extract_and_save_product_info(txt_path, output_path)
         extracted_paths.append(output_path)
 
