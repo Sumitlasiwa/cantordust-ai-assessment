@@ -102,7 +102,7 @@ def extract_fields(text_paths: List[str], output_dir: str) -> List[str]:
 
     extracted_paths = []
     for i, txt_path in enumerate(text_paths, start=1):
-        output_path = os.path.join(output_dir, f"product_info_{0}.json")
+        output_path = os.path.join(output_dir, f"product_info_{i}.json")
         extract_and_save_product_info(txt_path, output_path)
         extracted_paths.append(output_path)
 

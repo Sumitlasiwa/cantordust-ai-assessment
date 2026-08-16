@@ -7,7 +7,7 @@ URLS = [
         "https://www.deyeinverter.com/deyeinverter/2024/03/20/datasheet_sun-4-15k-g06p3-eu-am2_240318_en.pdf"
     ]
 
-final_report_path = "outputs/reports/final_report.md"
+final_report_path = "final_report.md"
 
 with tqdm(total=5, desc="Pipeline", unit="step") as progress:
     for update in graph.stream(
@@ -19,5 +19,5 @@ with tqdm(total=5, desc="Pipeline", unit="step") as progress:
         progress.update(1)
 
 
-
+print(f"✅ Report saved successfully to {final_report_path}")
 save_graph_visualization()
